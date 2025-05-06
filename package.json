@@ -4,12 +4,19 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "generate:server": "npx @hey-api/openapi-ts -f ./openapi-ts.server.config.ts"
   },
   "author": "",
   "license": "ISC",
   "description": "",
+  "dependencies": {
+    "fastify": "^5.3.2",
+    "fastify-openapi-glue": "^4.9.1"
+  },
   "devDependencies": {
+    "@hey-api/openapi-ts": "^0.67.1",
+    "@types/node": "^22.15.3",
+    "fastify-plugin": "^5.0.1",
     "typescript": "^5.8.3"
   }
 }
