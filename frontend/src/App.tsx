@@ -1,35 +1,80 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useQuery } from "@tanstack/react-query";
+import type { Pet } from "./client/types.gen.ts";
+import {
+  getPetByIdOptions,
+  getPetsOptions,
+} from "./client/@tanstack/react-query.gen.ts";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
+export const App = () => {
+  const {
+    data: pets,
+    isLoading: loadingPets,
+    error: errorPets,
+  } = useQuery({
+    ...getPetsOptions(),
+  });
+
+  const petId = 1;
+  const {
+    data: singlePet,
+    isLoading: loadingPet,
+    error: errorPet,
+  } = useQuery({
+    ...getPetByIdOptions({ path: { petId } }),
+  });
+
+  if (loadingPets || loadingPet) {
+    return <p className="read-the-docs">Loading...</p>;
+  }
+
+  if (errorPets || errorPet) {
+    return <p className="read-the-docs">Error loading data.</p>;
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <div id="root">
+      <header className="card">
+        <h1 className="logo">🐾 Pet Showcase</h1>
+        <p className="read-the-docs">Browse all pets and see one in detail</p>
+      </header>
 
-export default App
+      <section className="card">
+        <h2>All Pets</h2>
+        {pets && pets.length > 0 ? (
+          <ul>
+            {pets.map((pet: Pet) => (
+              <li key={pet.id}>
+                <strong>{pet.name}</strong>{" "}
+                {pet.tag && <span className="read-the-docs">({pet.tag})</span>}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="read-the-docs">No pets found.</p>
+        )}
+      </section>
+
+      <section className="card">
+        <h2>Single Pet</h2>
+        {singlePet ? (
+          <div>
+            <p>
+              <strong>ID:</strong> {singlePet.id}
+            </p>
+            <p>
+              <strong>Name:</strong> {singlePet.name}
+            </p>
+            {singlePet.tag && (
+              <p>
+                <strong>Tag:</strong> {singlePet.tag}
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="read-the-docs">No single pet data available.</p>
+        )}
+      </section>
+    </div>
+  );
+};
