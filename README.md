@@ -10,6 +10,26 @@ Este proyecto implementa una API REST basada en una especificación OpenAPI que 
 
 La API está construida utilizando Fastify como framework web y aprovecha la generación de código TypeScript a partir de la especificación OpenAPI para garantizar una implementación con seguridad de tipos.
 
+## Estructura del Monorepo
+
+Este proyecto está estructurado como un monorepo que contiene dos paquetes principales:
+
+### Paquete Cliente (`@ied/api-client`)
+
+El paquete cliente proporciona:
+- SDK tipado para consumir la API de Pets desde aplicaciones JavaScript/TypeScript
+- Tipos generados automáticamente desde la especificación OpenAPI
+- Integración con [TanStack Query](https://tanstack.com/query/latest) para React
+- Cliente HTTP basado en fetch para consumir los endpoints de la API
+
+### Paquete Servidor (`@ied/api-server`)
+
+El paquete servidor ofrece:
+- Plugin de Fastify para implementar la API según la especificación OpenAPI
+- Validación de peticiones y respuestas basada en esquemas OpenAPI
+- Tipos y esquemas generados automáticamente
+- Integración con fastify-openapi-glue para enrutar peticiones a los controladores
+
 ## Requisitos Previos
 
 - Node.js (versión recomendada: 18.x o superior)
@@ -30,21 +50,83 @@ La API está construida utilizando Fastify como framework web y aprovecha la gen
 
 ## Uso
 
-### Generar código a partir de la especificación OpenAPI
+### Construcción de los paquetes
+
+Para construir todos los paquetes del monorepo:
 
 ```bash
-npm run generate:server
+npm run build
 ```
 
-Este comando genera tipos TypeScript, configuración de Fastify y otros archivos necesarios a partir de la especificación OpenAPI.
+Este comando genera código TypeScript a partir de la especificación OpenAPI para ambos paquetes (cliente y servidor) y luego construye los paquetes con tsup.
 
-### Ejecutar el servidor
+### Construcción individual de paquetes
+
+Para construir solo el paquete cliente:
 
 ```bash
-npx tsx src/server/index.ts
+cd packages/client
+npm run build
 ```
 
-El servidor se iniciará en http://localhost:3000 por defecto.
+Para construir solo el paquete servidor:
+
+```bash
+cd packages/server
+npm run build
+```
+
+### Uso del paquete servidor
+
+Cuando implementes una API con el paquete servidor:
+
+```typescript
+import fastify from 'fastify';
+import { apiPlugin } from '@ied/api-server';
+import * as handlers from './handlers';
+
+const app = fastify();
+
+// Registrar el plugin de la API con los controladores
+await app.register(apiPlugin, {
+  handlers
+});
+
+await app.listen({ port: 3000 });
+```
+
+### Uso del paquete cliente
+
+Para consumir la API desde una aplicación:
+
+```typescript
+import { createClient } from '@ied/api-client';
+
+// Crear un cliente para la API
+const client = createClient({
+  baseUrl: 'http://localhost:3000'
+});
+
+// Usar el cliente para llamar a los endpoints
+const pets = await client.getPets();
+const pet = await client.getPetById({ petId: '123' });
+```
+
+### Con React Query
+
+```typescript
+import { useGetPets, useGetPetById } from '@ied/api-client';
+
+function PetsList() {
+  const { data: pets, isLoading } = useGetPets();
+  // ...
+}
+
+function PetDetails({ petId }) {
+  const { data: pet } = useGetPetById({ petId });
+  // ...
+}
+```
 
 ### Endpoints disponibles
 
@@ -55,19 +137,32 @@ El servidor se iniciará en http://localhost:3000 por defecto.
 ## Estructura del proyecto
 
 ```
-├── openapi-ts.server.config.ts  # Configuración para generar código desde OpenAPI
 ├── openapi.yaml                 # Especificación OpenAPI de la API
-├── package.json                 # Dependencias y scripts
+├── package.json                 # Dependencias y scripts del monorepo
 ├── tsconfig.json                # Configuración de TypeScript
-├── plugin/                      # Plugin personalizado
-├── plugins/                     # Plugins para la generación de código
-│   └── spec/                    # Plugin para la especificación
-├── src/                         # Código fuente
-│   └── server/                  # Implementación del servidor
-│       ├── api.ts               # Configuración de la API
-│       ├── index.ts             # Punto de entrada del servidor
-│       ├── controllers/         # Controladores para cada endpoint
-│       └── generated/           # Código generado automáticamente
+├── packages/                    # Paquetes del monorepo
+│   ├── client/                  # Paquete cliente (@ied/api-client)
+│   │   ├── openapi-ts.config.ts # Configuración para generar código cliente
+│   │   ├── package.json         # Dependencias del cliente
+│   │   ├── tsconfig.json        # Configuración TypeScript del cliente
+│   │   └── src/                 # Código fuente del cliente
+│   │       ├── client.gen.ts    # Cliente HTTP generado
+│   │       ├── index.ts         # Punto de entrada del paquete
+│   │       ├── sdk.gen.ts       # SDK tipado generado
+│   │       ├── types.gen.ts     # Tipos generados
+│   │       └── @tanstack/       # Integración con React Query
+│   └── server/                  # Paquete servidor (@ied/api-server)
+│       ├── openapi-ts.config.ts # Configuración para generar código servidor
+│       ├── package.json         # Dependencias del servidor
+│       ├── tsconfig.json        # Configuración TypeScript del servidor
+│       └── src/                 # Código fuente del servidor
+│           ├── index.ts         # Plugin de Fastify para la API
+│           └── generated/       # Código generado automáticamente
+│               ├── fastify.gen.ts # Configuración de Fastify
+│               ├── spec.gen.ts    # Especificación procesada
+│               └── types.gen.ts   # Tipos generados
+└── plugins/                     # Plugins para la generación de código
+    └── spec/                    # Plugin para procesar la especificación
 ```
 
 ## Tecnologías utilizadas
@@ -76,18 +171,38 @@ El servidor se iniciará en http://localhost:3000 por defecto.
 - **Fastify**: Framework web rápido para Node.js
 - **OpenAPI**: Para la definición y documentación de la API
 - **@hey-api/openapi-ts**: Para generar código TypeScript desde la especificación OpenAPI
+- **TanStack Query**: Para gestión de estado y caché en el cliente
+- **tsup**: Para empaquetar los paquetes TypeScript
+- **Workspaces de npm**: Para gestionar el monorepo
 
 ## Desarrollo
+
+### Flujo de trabajo con el monorepo
+
+1. Edite el archivo `openapi.yaml` en la raíz para modificar la especificación de la API
+2. Ejecute `npm run build` para regenerar el código en ambos paquetes
+3. Implemente los controladores del servidor utilizando el paquete servidor
+4. Utilice el paquete cliente para consumir la API en sus aplicaciones
 
 ### Modificar la API
 
 1. Edite el archivo `openapi.yaml` para modificar la especificación de la API
-2. Ejecute `npm run generate:server` para regenerar el código
-3. Implemente la lógica en los controladores correspondientes
+2. Ejecute `npm run build` para regenerar el código en ambos paquetes
+3. Implemente la lógica en los controladores de su aplicación
 
 ### Añadir nuevos endpoints
 
 1. Añada la definición del nuevo endpoint en `openapi.yaml`
-2. Genere el código con `npm run generate:server`
-3. Cree un nuevo controlador en `src/server/controllers/`
-4. Añada el controlador al índice en `src/server/controllers/index.ts`
+2. Genere el código con `npm run build`
+3. Implemente los controladores para los nuevos endpoints
+4. Utilize los nuevos métodos generados en el cliente para consumir los endpoints
+
+### Publicación de los paquetes
+
+Si desea publicar los paquetes en un registro npm privado:
+
+```bash
+# Desde la raíz del monorepo
+npm publish --workspace=packages/client
+npm publish --workspace=packages/server
+```

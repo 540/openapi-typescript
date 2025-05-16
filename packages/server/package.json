@@ -1,0 +1,32 @@
+{
+  "name": "@ied/api-server",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": "./dist/index.js",
+      "default": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "npx @hey-api/openapi-ts && tsup",
+    "check-exports": "attw --pack ."
+  },
+  "peerDependencies": {
+    "fastify": "^5.3.3"
+  },
+  "dependencies": {
+    "fastify-openapi-glue": "^4.9.1",
+    "fastify-plugin": "^5.0.1"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.67.4",
+    "tsup": "^8.4.0"
+  }
+}

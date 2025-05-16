@@ -7,9 +7,11 @@ export interface ApiOptions {
     handlers: RouteHandlers;
 }
 
-export default fp<ApiOptions>(async (fastify, opts) => {
+export const apiPlugin =  fp<ApiOptions>(async (fastify, opts) => {
     fastify.register(openapiGlue, {
         specification: spec,
         serviceHandlers: opts.handlers,
     });
 });
+
+export default apiPlugin;

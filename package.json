@@ -1,22 +1,14 @@
 {
   "name": "api-poc",
-  "version": "1.0.0",
-  "main": "index.js",
-  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "generate:server": "npx @hey-api/openapi-ts -f ./openapi-ts.server.config.ts"
-  },
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "fastify": "^5.3.2",
-    "fastify-openapi-glue": "^4.9.1"
+    "build": "npm run build --workspaces --if-present",
+    "check-exports": "npm run check-exports --workspaces --if-present"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.67.1",
-    "@types/node": "^22.15.3",
-    "fastify-plugin": "^5.0.1",
+    "@arethetypeswrong/cli": "^0.18.1",
     "typescript": "^5.8.3"
   }
 }

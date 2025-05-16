@@ -1,25 +1,6 @@
 {
-  "compilerOptions": {
-    /* Base Options: */
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "target": "es2022",
-    "allowJs": true,
-    "resolveJsonModule": true,
-    "moduleDetection": "force",
-    "isolatedModules": true,
-    "verbatimModuleSyntax": true,
-
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "outDir": "dist",
-    "sourceMap": true,
-    
-    "lib": ["es2022"],
-
-    /* Strictness */
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
-  }
+  "references": [
+    { "path": "./packages/client/tsconfig.json" },
+    { "path": "./packages/server/tsconfig.json" }
+  ],
 }
