@@ -5,10 +5,16 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
-    "check-exports": "npm run check-exports --workspaces --if-present"
+    "check-exports": "npm run check-exports --workspaces --if-present",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "npm run build && changeset publish",
+    "lint:openapi": "spectral lint openapi.yaml"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.1",
+    "@changesets/cli": "^2.29.4",
+    "@stoplight/spectral-cli": "^6.15.0",
     "typescript": "^5.8.3"
   }
 }

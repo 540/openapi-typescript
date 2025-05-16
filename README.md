@@ -199,10 +199,49 @@ function PetDetails({ petId }) {
 
 ### Publicación de los paquetes
 
-Si desea publicar los paquetes en un registro npm privado:
+Este proyecto utiliza [Changesets](https://github.com/changesets/changesets) para gestionar los cambios de versiones, generar changelogs y publicar paquetes a GitHub Packages.
+
+#### Flujo de trabajo de CI/CD
+
+1. **Desarrollo de feature**:
+   ```bash
+   # Crea una rama de trabajo
+   git checkout -b feature/nueva-funcionalidad
+   
+   # Haz tus cambios en la especificación OpenAPI o en los paquetes
+   # ...
+   
+   # Crea un changeset para documentar los cambios
+   npm run changeset
+   ```
+
+2. **Validación CI**:
+   - Cuando creas una PR a `main`, las GitHub Actions verifican:
+     - La especificación OpenAPI mediante linting
+     - La correcta construcción de los paquetes
+     - La presencia de changesets para documentar cambios
+
+3. **Merge a main**:
+   - Después de la aprobación y merge, se ejecuta el flujo de CD
+
+4. **Publicación automática**:
+   - El flujo de CD:
+     - Genera código a partir de la especificación OpenAPI
+     - Crea una PR de release con los cambios de versión o publica directamente
+     - Publica los paquetes en GitHub Packages
+
+#### Publicación manual
+
+Para crear manualmente un changeset:
 
 ```bash
-# Desde la raíz del monorepo
-npm publish --workspace=packages/client
-npm publish --workspace=packages/server
+npm run changeset
+# Sigue las instrucciones para seleccionar paquetes y tipo de cambio
+```
+
+Para publicar manualmente los paquetes:
+
+```bash
+npm run version  # Actualiza versiones según los changesets
+npm run release  # Construye y publica los paquetes a GitHub Packages
 ```

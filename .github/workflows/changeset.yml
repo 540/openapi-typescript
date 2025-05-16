@@ -1,0 +1,30 @@
+name: Changeset
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'openapi.yaml'
+      - 'packages/**'
+
+jobs:
+  check-changeset:
+    name: Check Changeset
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check for Changeset
+        run: npx changeset status --since=origin/main

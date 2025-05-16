@@ -1,6 +1,15 @@
 {
   "name": "@ied/api-server",
   "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/540/api-poc.git",
+    "directory": "packages/server"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
