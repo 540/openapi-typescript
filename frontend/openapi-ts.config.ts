@@ -1,4 +1,5 @@
 import { defaultPlugins, defineConfig } from "@hey-api/openapi-ts";
+import { defineMswSchemaPluginConfig } from "../plugins/msw-schema/index.js";
 
 export default defineConfig({
   input: "../openapi.yaml",
@@ -12,5 +13,6 @@ export default defineConfig({
       name: "@hey-api/sdk",
       validator: true,
     },
+    defineMswSchemaPluginConfig({}),
   ],
 });

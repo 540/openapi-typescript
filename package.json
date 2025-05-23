@@ -18,6 +18,8 @@
     "@hey-api/openapi-ts": "^0.67.1",
     "@types/node": "^22.15.3",
     "fastify-plugin": "^5.0.1",
+    "openapi-msw": "^1.2.0",
+    "prettier": "^3.5.3",
     "typescript": "^5.8.3"
   }
 }
