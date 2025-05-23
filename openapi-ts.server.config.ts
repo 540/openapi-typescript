@@ -6,7 +6,7 @@ export default defineConfig({
   output: {
     format: "prettier",
     lint: "eslint",
-    path: "./src/server/generated",
+    path: "./src/generated/server",
   },
   plugins: [
     { name: "fastify", exportFromIndex: true },

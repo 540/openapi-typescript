@@ -1,7 +1,7 @@
 import fp from "fastify-plugin";
 import openapiGlue from "fastify-openapi-glue";
 
-import { spec, type RouteHandlers } from "./generated/index.js";
+import { type RouteHandlers, spec } from "../generated/server/index.js";
 
 export interface ApiOptions {
   handlers: RouteHandlers;

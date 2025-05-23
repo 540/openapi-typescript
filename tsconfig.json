@@ -21,5 +21,9 @@
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true
-  }
+  },
+  "references": [
+    { "path": "./tsconfig.server.json" },
+    { "path": "./tsconfig.frontend.json" }
+  ]
 }

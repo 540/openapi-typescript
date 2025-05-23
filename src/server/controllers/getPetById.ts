@@ -1,4 +1,4 @@
-import type { RouteHandlers } from "../generated/fastify.gen.js";
+import type { RouteHandlers } from "../../generated/server/fastify.gen.js";
 
 export const getPetById: RouteHandlers["getPetById"] = async (request, reply) => {
   const petId = request.params.petId;
