@@ -33,17 +33,60 @@ interface OpenAPIOperation {
   responses?: Record<string, OpenAPIResponse>;
 }
 
+// Tipo para los métodos HTTP
+type HttpMethod = 'get' | 'put' | 'post' | 'delete' | 'options' | 'head' | 'patch' | 'trace';
+
+// Tipo para un objeto de ruta en OpenAPI
+interface OpenAPIPathItem {
+  parameters?: OpenAPIParameter[];
+  summary?: string;
+  description?: string;
+  get?: OpenAPIOperation;
+  put?: OpenAPIOperation;
+  post?: OpenAPIOperation;
+  delete?: OpenAPIOperation;
+  options?: OpenAPIOperation;
+  head?: OpenAPIOperation;
+  patch?: OpenAPIOperation;
+  trace?: OpenAPIOperation;
+  [key: string]: any; // Para otras propiedades que puedan existir
+}
+
+// Tipo para el objeto paths en OpenAPI
+interface OpenAPIPaths {
+  [path: string]: OpenAPIPathItem;
+}
+
+// Tipo para el documento OpenAPI
+interface OpenAPISpec {
+  openapi: string;
+  info: {
+    title: string;
+    version: string;
+    description?: string;
+  };
+  servers?: Array<{
+    url: string;
+    description?: string;
+  }>;
+  paths: OpenAPIPaths;
+  components?: Record<string, any>;
+}
+
 export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
   const file = context.createFile({
     id: plugin.name,
     path: plugin.output,
   });
 
+  // Tratar context.spec como OpenAPISpec
+  const spec = context.spec as unknown as OpenAPISpec;
+
   // Obtener las rutas del spec
-  const pathKeys = Object.keys(context.spec.paths ?? {});
+  const pathKeys = Object.keys(spec.paths ?? {});
 
   // Lista de métodos HTTP que queremos comprobar
-  const httpMethods = ["get", "put", "post", "delete", "options", "head", "patch", "trace"];
+  const httpMethods = ["get", "put", "post", "delete", "options", "head", "patch", "trace"] as const;
 
   // Helper function to check if a parameter type exists in the operation
   const hasParameterType = (
@@ -78,10 +121,10 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
   // Llenar los mapas de tipos de respuesta y error
   // Recorremos todas las rutas y métodos para encontrar los operationId
   for (const path of pathKeys) {
-    const pathObj = context.spec.paths?.[path] ?? {};
+    const pathObj = spec.paths[path] ?? {};
 
     for (const method of httpMethods) {
-      const methodObj = pathObj[method];
+      const methodObj = pathObj[method] as OpenAPIOperation | undefined;
       if (methodObj) {
         const operationId = methodObj.operationId;
         if (operationId) {
@@ -132,7 +175,7 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
 
   // Crear una propiedad para cada ruta
   const members = pathKeys.map((path) => {
-    const pathObj = context.spec.paths?.[path] ?? {};
+    const pathObj = spec.paths[path] ?? {};
 
     // Obtener los parámetros a nivel de ruta (no utilizados actualmente)
     // const pathParameters = pathObj.parameters || [];
@@ -141,10 +184,10 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
     const methodMembers = httpMethods.map((method) => {
       // Comprobar si el método existe en la ruta
       const methodExists = !!pathObj[method];
-      const methodObj = pathObj[method];
+      const methodObj = pathObj[method] as OpenAPIOperation | undefined;
 
       // Si el método existe, crear una propiedad con la estructura de parámetros
-      if (methodExists) {
+      if (methodExists && methodObj) {
         // Obtener el operationId para este método
         const operationId = methodObj.operationId;
 
@@ -235,12 +278,12 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
               let contentValue;
               if (isSuccess) {
                 contentValue = ts.factory.createIndexedAccessTypeNode(
-                  ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(responsesType)),
+                  ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(responsesType!)),
                   ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(statusCode)),
                 );
               } else {
                 contentValue = ts.factory.createIndexedAccessTypeNode(
-                  ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(errorsType)),
+                  ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(errorsType!)),
                   ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(statusCode)),
                 );
               }
