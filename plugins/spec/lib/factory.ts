@@ -1,6 +1,9 @@
 import ts from "typescript";
 
-export function createObjectLiteralExpression(obj: unknown, useSingleQuotes?: boolean): ts.Expression {
+export function createObjectLiteralExpression(
+  obj: unknown,
+  useSingleQuotes?: boolean,
+): ts.Expression {
   if (obj === null) {
     return ts.factory.createNull();
   }
@@ -26,7 +29,7 @@ export function createObjectLiteralExpression(obj: unknown, useSingleQuotes?: bo
     const properties = Object.entries(obj).map(([key, value]) => {
       return ts.factory.createPropertyAssignment(
         ts.factory.createStringLiteral(key, useSingleQuotes),
-        createObjectLiteralExpression(value, useSingleQuotes)
+        createObjectLiteralExpression(value, useSingleQuotes),
       );
     });
 

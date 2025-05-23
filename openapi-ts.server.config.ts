@@ -1,5 +1,5 @@
 import { defineConfig } from "@hey-api/openapi-ts";
-import { defineSpecPluginConfig } from './plugins/spec/index.js';
+import { defineSpecPluginConfig } from "./plugins/spec/index.js";
 
 export default defineConfig({
   input: "./openapi.yaml",
@@ -9,7 +9,7 @@ export default defineConfig({
     path: "./src/server/generated",
   },
   plugins: [
-    {name: "fastify", exportFromIndex: true },
-    defineSpecPluginConfig({ useSingleQuotes: true, exportFromIndex: true }), 
+    { name: "fastify", exportFromIndex: true },
+    defineSpecPluginConfig({ useSingleQuotes: true, exportFromIndex: true }),
   ],
 });

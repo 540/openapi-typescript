@@ -14,12 +14,12 @@
     "moduleResolution": "NodeNext",
     "outDir": "dist",
     "sourceMap": true,
-    
+
     "lib": ["es2022"],
 
     /* Strictness */
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
+    "noImplicitOverride": true
   }
 }

@@ -1,9 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Pet } from "./client/types.gen.ts";
-import {
-  getPetByIdOptions,
-  getPetsOptions,
-} from "./client/@tanstack/react-query.gen.ts";
+import { getPetByIdOptions, getPetsOptions } from "./client/@tanstack/react-query.gen.ts";
 import "./App.css";
 
 export const App = () => {

@@ -2,6 +2,37 @@ import ts from "typescript";
 import type { Plugin } from "@hey-api/openapi-ts";
 import type { Config } from "./types.js";
 
+// Definición de tipos para OpenAPI
+interface OpenAPIParameter {
+  name: string;
+  in: string;
+  required?: boolean;
+  description?: string;
+  schema?: Record<string, unknown>;
+}
+
+interface OpenAPIResponse {
+  description: string;
+  content?: Record<
+    string,
+    {
+      schema?: Record<string, unknown>;
+    }
+  >;
+}
+
+interface OpenAPIOperation {
+  summary?: string;
+  operationId?: string;
+  tags?: string[];
+  parameters?: OpenAPIParameter[];
+  requestBody?: {
+    content?: Record<string, unknown>;
+    required?: boolean;
+  };
+  responses?: Record<string, OpenAPIResponse>;
+}
+
 export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
   const file = context.createFile({
     id: plugin.name,
@@ -15,12 +46,15 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
   const httpMethods = ["get", "put", "post", "delete", "options", "head", "patch", "trace"];
 
   // Helper function to check if a parameter type exists in the operation
-  const hasParameterType = (operation: any, paramType: string): boolean => {
+  const hasParameterType = (
+    operation: OpenAPIOperation | undefined,
+    paramType: string,
+  ): boolean => {
     if (!operation) return false;
 
     // Check operation parameters
     const operationParams = operation.parameters || [];
-    if (operationParams.some((param: any) => param.in === paramType)) {
+    if (operationParams.some((param) => param.in === paramType)) {
       return true;
     }
 
@@ -28,7 +62,7 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
   };
 
   // Helper function to check if a request body exists in the operation
-  const hasRequestBody = (operation: any): boolean => {
+  const hasRequestBody = (operation: OpenAPIOperation | undefined): boolean => {
     return !!operation?.requestBody;
   };
 
@@ -81,14 +115,14 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
 
   // Crear los elementos de importación con nombre
   const namedImports = typesToImport.map((type) =>
-    ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier(type))
+    ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier(type)),
   );
 
   // Crear la declaración de importación con 'import type'
   const importDeclaration = ts.factory.createImportDeclaration(
     undefined,
     ts.factory.createImportClause(true, undefined, ts.factory.createNamedImports(namedImports)),
-    ts.factory.createStringLiteral("./types.gen.js")
+    ts.factory.createStringLiteral("./types.gen.js"),
   );
 
   // Añadir la importación al archivo
@@ -100,8 +134,8 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
   const members = pathKeys.map((path) => {
     const pathObj = context.spec.paths?.[path] ?? {};
 
-    // Obtener los parámetros a nivel de ruta
-    const pathParameters = pathObj.parameters || [];
+    // Obtener los parámetros a nivel de ruta (no utilizados actualmente)
+    // const pathParameters = pathObj.parameters || [];
 
     // Crear propiedades para cada método HTTP
     const methodMembers = httpMethods.map((method) => {
@@ -127,7 +161,7 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
 
           // Añadir la propiedad parameters derivada del tipo Data
           // Crear un tipo indexado para acceder a las propiedades query y path (sin header ni cookie)
-          const parametersProperties = ["query", "path"].map(paramType => {
+          const parametersProperties = ["query", "path"].map((paramType) => {
             // Check if this parameter type exists in the operation
             const paramExists = hasParameterType(methodObj, paramType);
 
@@ -137,7 +171,7 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
                 undefined,
                 ts.factory.createIdentifier(paramType),
                 ts.factory.createToken(ts.SyntaxKind.QuestionToken),
-                ts.factory.createKeywordTypeNode(ts.SyntaxKind.NeverKeyword)
+                ts.factory.createKeywordTypeNode(ts.SyntaxKind.NeverKeyword),
               );
             }
 
@@ -148,8 +182,8 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
               undefined,
               ts.factory.createIndexedAccessTypeNode(
                 ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(dataType)),
-                ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(paramType))
-              )
+                ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(paramType)),
+              ),
             );
           });
 
@@ -159,8 +193,8 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
               undefined,
               ts.factory.createIdentifier("parameters"),
               undefined,
-              ts.factory.createTypeLiteralNode(parametersProperties)
-            )
+              ts.factory.createTypeLiteralNode(parametersProperties),
+            ),
           );
 
           // Crear una estructura de respuestas con el formato requerido
@@ -182,17 +216,19 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
                 ts.factory.createTypeLiteralNode([
                   ts.factory.createIndexSignature(
                     undefined,
-                    [ts.factory.createParameterDeclaration(
-                      undefined,
-                      undefined,
-                      ts.factory.createIdentifier("name"),
-                      undefined,
-                      ts.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
-                      undefined
-                    )],
-                    ts.factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)
-                  )
-                ])
+                    [
+                      ts.factory.createParameterDeclaration(
+                        undefined,
+                        undefined,
+                        ts.factory.createIdentifier("name"),
+                        undefined,
+                        ts.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
+                        undefined,
+                      ),
+                    ],
+                    ts.factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
+                  ),
+                ]),
               );
 
               // Crear la propiedad content con application/json
@@ -200,12 +236,12 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
               if (isSuccess) {
                 contentValue = ts.factory.createIndexedAccessTypeNode(
                   ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(responsesType)),
-                  ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(statusCode))
+                  ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(statusCode)),
                 );
               } else {
                 contentValue = ts.factory.createIndexedAccessTypeNode(
                   ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(errorsType)),
-                  ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(statusCode))
+                  ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(statusCode)),
                 );
               }
 
@@ -218,9 +254,9 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
                     undefined,
                     ts.factory.createStringLiteral("application/json"),
                     undefined,
-                    contentValue
-                  )
-                ])
+                    contentValue,
+                  ),
+                ]),
               );
 
               // Crear el tipo de respuesta completo para este código de estado
@@ -228,19 +264,16 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
                 undefined,
                 ts.factory.createNumericLiteral(statusCode),
                 undefined,
-                ts.factory.createTypeLiteralNode([
-                  headersProperty,
-                  contentProperty
-                ])
+                ts.factory.createTypeLiteralNode([headersProperty, contentProperty]),
               );
             };
 
             // Obtener los códigos de estado de las respuestas y errores del spec
-            const getStatusCodes = (operation: any, isError: boolean) => {
+            const getStatusCodes = (operation: OpenAPIOperation | undefined, isError: boolean) => {
               if (!operation?.responses) return [];
 
               // Filtrar los códigos de estado según si son de éxito o error
-              return Object.keys(operation.responses).filter(code => {
+              return Object.keys(operation.responses).filter((code) => {
                 const codeNum = parseInt(code, 10);
                 if (isError) {
                   return codeNum >= 400; // Códigos de error
@@ -272,8 +305,8 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
                 undefined,
                 ts.factory.createIdentifier("responses"),
                 undefined,
-                ts.factory.createTypeLiteralNode(responsesProperties)
-              )
+                ts.factory.createTypeLiteralNode(responsesProperties),
+              ),
             );
           }
 
@@ -288,14 +321,14 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
                 undefined,
                 ts.factory.createIdentifier("requestBody"),
                 ts.factory.createToken(ts.SyntaxKind.QuestionToken),
-                ts.factory.createKeywordTypeNode(ts.SyntaxKind.NeverKeyword)
-              )
+                ts.factory.createKeywordTypeNode(ts.SyntaxKind.NeverKeyword),
+              ),
             );
           } else {
             // Otherwise, reference the Data type
             const bodyAccessExpression = ts.factory.createIndexedAccessTypeNode(
               ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(dataType)),
-              ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral("body"))
+              ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral("body")),
             );
 
             // Añadir la propiedad requestBody
@@ -304,8 +337,8 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
                 undefined,
                 ts.factory.createIdentifier("requestBody"),
                 undefined,
-                bodyAccessExpression
-              )
+                bodyAccessExpression,
+              ),
             );
           }
         }
@@ -314,7 +347,7 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
           undefined,
           ts.factory.createIdentifier(method),
           undefined,
-          ts.factory.createTypeLiteralNode(methodProperties)
+          ts.factory.createTypeLiteralNode(methodProperties),
         );
       } else {
         // Si el método no existe, crear una propiedad opcional con valor never
@@ -322,7 +355,7 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
           undefined,
           ts.factory.createIdentifier(method),
           ts.factory.createToken(ts.SyntaxKind.QuestionToken),
-          ts.factory.createKeywordTypeNode(ts.SyntaxKind.NeverKeyword)
+          ts.factory.createKeywordTypeNode(ts.SyntaxKind.NeverKeyword),
         );
       }
     });
@@ -332,7 +365,7 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
       undefined,
       ts.factory.createStringLiteral(path),
       undefined,
-      ts.factory.createTypeLiteralNode(methodMembers)
+      ts.factory.createTypeLiteralNode(methodMembers),
     );
   });
 
@@ -341,7 +374,7 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
     "Paths",
     undefined,
     undefined,
-    members
+    members,
   );
 
   file.add(interfaceDeclaration);

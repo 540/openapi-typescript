@@ -1,3 +1,5 @@
 node_modules
 build
-dist 
+dist
+*.gen.ts
+*.gen.js

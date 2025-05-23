@@ -18,15 +18,12 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
     undefined,
     ts.factory.createAsExpression(
       createObjectLiteralExpression(context.spec, plugin.useSingleQuotes),
-      ts.factory.createTypeReferenceNode('const')
-    )
+      ts.factory.createTypeReferenceNode("const"),
+    ),
   );
   const specVariableStatement = ts.factory.createVariableStatement(
     [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
-    ts.factory.createVariableDeclarationList(
-      [specVariableDeclaration],
-      ts.NodeFlags.Const
-    )
+    ts.factory.createVariableDeclarationList([specVariableDeclaration], ts.NodeFlags.Const),
   );
   file.add(specVariableStatement);
 };
