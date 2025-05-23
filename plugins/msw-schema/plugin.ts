@@ -33,9 +33,6 @@ interface OpenAPIOperation {
   responses?: Record<string, OpenAPIResponse>;
 }
 
-// Tipo para los métodos HTTP
-type HttpMethod = 'get' | 'put' | 'post' | 'delete' | 'options' | 'head' | 'patch' | 'trace';
-
 // Tipo para un objeto de ruta en OpenAPI
 interface OpenAPIPathItem {
   parameters?: OpenAPIParameter[];
@@ -49,6 +46,7 @@ interface OpenAPIPathItem {
   head?: OpenAPIOperation;
   patch?: OpenAPIOperation;
   trace?: OpenAPIOperation;
+
   [key: string]: any; // Para otras propiedades que puedan existir
 }
 
@@ -86,7 +84,16 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
   const pathKeys = Object.keys(spec.paths ?? {});
 
   // Lista de métodos HTTP que queremos comprobar
-  const httpMethods = ["get", "put", "post", "delete", "options", "head", "patch", "trace"] as const;
+  const httpMethods = [
+    "get",
+    "put",
+    "post",
+    "delete",
+    "options",
+    "head",
+    "patch",
+    "trace",
+  ] as const;
 
   // Helper function to check if a parameter type exists in the operation
   const hasParameterType = (
@@ -249,8 +256,11 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
             // Crear un objeto literal para las respuestas
             const responsesProperties = [];
 
-            // Función para crear una propiedad de respuesta para un código de estado específico
-            const createResponseProperty = (statusCode: string, isSuccess: boolean) => {
+            // Función base para crear una propiedad de respuesta con headers y content
+            const createBaseResponseProperty = (
+              statusCode: string,
+              contentValue: ts.TypeNode
+            ) => {
               // Crear la propiedad headers
               const headersProperty = ts.factory.createPropertySignature(
                 undefined,
@@ -275,19 +285,6 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
               );
 
               // Crear la propiedad content con application/json
-              let contentValue;
-              if (isSuccess) {
-                contentValue = ts.factory.createIndexedAccessTypeNode(
-                  ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(responsesType!)),
-                  ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(statusCode)),
-                );
-              } else {
-                contentValue = ts.factory.createIndexedAccessTypeNode(
-                  ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(errorsType!)),
-                  ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(statusCode)),
-                );
-              }
-
               const contentProperty = ts.factory.createPropertySignature(
                 undefined,
                 ts.factory.createIdentifier("content"),
@@ -311,6 +308,26 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
               );
             };
 
+            // Función para crear una propiedad de respuesta exitosa
+            const createSuccessResponseProperty = (statusCode: string) => {
+              const contentValue = ts.factory.createIndexedAccessTypeNode(
+                ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(responsesType!)),
+                ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(statusCode)),
+              );
+
+              return createBaseResponseProperty(statusCode, contentValue);
+            };
+
+            // Función para crear una propiedad de respuesta de error
+            const createErrorResponseProperty = (statusCode: string) => {
+              const contentValue = ts.factory.createIndexedAccessTypeNode(
+                ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(errorsType!)),
+                ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(statusCode)),
+              );
+
+              return createBaseResponseProperty(statusCode, contentValue);
+            };
+
             // Obtener los códigos de estado de las respuestas y errores del spec
             const getStatusCodes = (operation: OpenAPIOperation | undefined, isError: boolean) => {
               if (!operation?.responses) return [];
@@ -330,7 +347,7 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
             if (responsesType) {
               const successCodes = getStatusCodes(methodObj, false);
               for (const code of successCodes) {
-                responsesProperties.push(createResponseProperty(code, true));
+                responsesProperties.push(createSuccessResponseProperty(code));
               }
             }
 
@@ -338,7 +355,7 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
             if (errorsType) {
               const errorCodes = getStatusCodes(methodObj, true);
               for (const code of errorCodes) {
-                responsesProperties.push(createResponseProperty(code, false));
+                responsesProperties.push(createErrorResponseProperty(code));
               }
             }
 
