@@ -1,11 +1,16 @@
-import type { RouteHandlers } from "../generated/fastify.gen.js";
+import type { RouteHandlers } from "../../generated/server/fastify.gen.js";
+import { findPetById } from "./pets.js";
 
-export const getPetById: RouteHandlers["getPetById"] = async (request, reply) => {
-    const petId = request.params.petId;
+export const getPetById: RouteHandlers["getPetById"] = (request, reply) => {
+  const petId = request.params.petId;
+  const pet = findPetById(petId);
 
-    await reply.status(200).send({
-        id: petId,
-        name: "Fluffy",
-        tag: "cat",
+  if (!pet) {
+    reply.status(404).send({
+      error: "Pet not found",
     });
+    return;
+  }
+
+  reply.status(200).send(pet);
 };

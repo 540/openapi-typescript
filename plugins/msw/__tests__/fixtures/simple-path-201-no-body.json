@@ -1,0 +1,21 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Simple API",
+    "version": "1.0.0",
+    "description": "A simple OpenAPI spec with one path returning 201 with no body"
+  },
+  "paths": {
+    "/resource": {
+      "post": {
+        "operationId": "createResource",
+        "summary": "Create a new resource",
+        "responses": {
+          "201": {
+            "description": "Resource created successfully"
+          }
+        }
+      }
+    }
+  }
+}

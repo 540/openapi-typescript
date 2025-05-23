@@ -1,0 +1,83 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`msw plugin should generate correct TypeScript interfaces for basic API endpoints 1`] = `
+"import { createOpenApiHttp as baseCreateOpenApiHttp } from "openapi-msw";
+export const createOpenApiHttp: typeof baseCreateOpenApiHttp<paths> = baseCreateOpenApiHttp;
+export interface paths {
+    "/resource": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a new resource */
+        post: operations["createResource"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+}
+"
+`;
+
+exports[`msw plugin should generate correct TypeScript interfaces for empty OpenAPI spec 1`] = `
+"import { createOpenApiHttp as baseCreateOpenApiHttp } from "openapi-msw";
+export const createOpenApiHttp: typeof baseCreateOpenApiHttp<paths> = baseCreateOpenApiHttp;
+export type paths = Record<string, never>;
+"
+`;
+
+exports[`msw plugin should generate correct TypeScript interfaces for endpoints with complex responses 1`] = `
+"import { createOpenApiHttp as baseCreateOpenApiHttp } from "openapi-msw";
+export const createOpenApiHttp: typeof baseCreateOpenApiHttp<paths> = baseCreateOpenApiHttp;
+export interface paths {
+    "/resource": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a resource */
+        get: operations["getResource"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+}
+"
+`;
+
+exports[`msw plugin should generate correct TypeScript interfaces for endpoints with request bodies 1`] = `
+"import { createOpenApiHttp as baseCreateOpenApiHttp } from "openapi-msw";
+export const createOpenApiHttp: typeof baseCreateOpenApiHttp<paths> = baseCreateOpenApiHttp;
+export interface paths {
+    "/resource": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a resource with request body */
+        post: operations["createResourceWithBody"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+}
+"
+`;

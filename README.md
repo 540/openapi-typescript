@@ -5,6 +5,7 @@ Una API de demostración (Proof of Concept) que proporciona endpoints para gesti
 ## Descripción
 
 Este proyecto implementa una API REST basada en una especificación OpenAPI que permite:
+
 - Recuperar una lista de todas las mascotas
 - Obtener información detallada sobre una mascota específica por su ID
 
@@ -18,6 +19,7 @@ La API está construida utilizando Fastify como framework web y aprovecha la gen
 ## Instalación
 
 1. Clone el repositorio:
+
    ```bash
    git clone git@github.com:540/openapi-typescript.git
    cd api-poc

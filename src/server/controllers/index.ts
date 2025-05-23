@@ -1,4 +1,4 @@
-import type { RouteHandlers } from "../generated/fastify.gen.js";
+import type { RouteHandlers } from "../../generated/server/fastify.gen.js";
 
 import { getPets } from "./getPets.js";
 import { getPetById } from "./getPetById.js";
