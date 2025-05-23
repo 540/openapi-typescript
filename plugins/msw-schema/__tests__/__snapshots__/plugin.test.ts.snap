@@ -1,0 +1,241 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`msw-schema plugin should generate Paths interface for simple path with 201 response and no body 1`] = `
+"import type {} from "./types.gen.js";
+export interface Paths {
+    "/resource": {
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                path?: never;
+            };
+            responses: {
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+            requestBody?: never;
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+}
+"
+`;
+
+exports[`msw-schema plugin should generate Paths interface with 200 response containing an object 1`] = `
+"import type { GetResourceResponses } from "./types.gen.js";
+export interface Paths {
+    "/resource": {
+        get: {
+            parameters: {
+                query?: never;
+                path?: never;
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": GetResourceResponses["200"];
+                    };
+                };
+            };
+            requestBody?: never;
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+}
+"
+`;
+
+exports[`msw-schema plugin should generate Paths interface with 401 error response 1`] = `
+"import type { GetProtectedResourceErrors } from "./types.gen.js";
+export interface Paths {
+    "/protected-resource": {
+        get: {
+            parameters: {
+                query?: never;
+                path?: never;
+            };
+            responses: {
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": GetProtectedResourceErrors["401"];
+                    };
+                };
+            };
+            requestBody?: never;
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+}
+"
+`;
+
+exports[`msw-schema plugin should generate Paths interface with 500 error response without body 1`] = `
+"import type {} from "./types.gen.js";
+export interface Paths {
+    "/server-error": {
+        get: {
+            parameters: {
+                query?: never;
+                path?: never;
+            };
+            responses: {
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+            requestBody?: never;
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+}
+"
+`;
+
+exports[`msw-schema plugin should generate Paths interface with path parameters 1`] = `
+"import type { GetResourceByIdData } from "./types.gen.js";
+export interface Paths {
+    "/resources/{id}": {
+        get: {
+            parameters: {
+                query?: never;
+                path: GetResourceByIdData["path"];
+            };
+            responses: {
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+            requestBody?: never;
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+}
+"
+`;
+
+exports[`msw-schema plugin should generate Paths interface with query parameters 1`] = `
+"import type { ListResourcesData } from "./types.gen.js";
+export interface Paths {
+    "/resources": {
+        get: {
+            parameters: {
+                query: ListResourcesData["query"];
+                path?: never;
+            };
+            responses: {
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+            requestBody?: never;
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+}
+"
+`;
+
+exports[`msw-schema plugin should generate Paths interface with request body and 201 response without body 1`] = `
+"import type { CreateResourceWithBodyData } from "./types.gen.js";
+export interface Paths {
+    "/resource": {
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                path?: never;
+            };
+            responses: {
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+            requestBody: CreateResourceWithBodyData["body"];
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+}
+"
+`;
+
+exports[`msw-schema plugin should generate empty Paths interface for minimal OpenAPI with no paths 1`] = `
+"import type {} from "./types.gen.js";
+export interface Paths {
+}
+"
+`;

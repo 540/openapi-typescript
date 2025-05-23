@@ -1,0 +1,37 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Simple API with 401 Error Response",
+    "version": "1.0.0",
+    "description": "A simple OpenAPI spec with a 401 error response containing an error message"
+  },
+  "paths": {
+    "/protected-resource": {
+      "get": {
+        "operationId": "getProtectedResource",
+        "summary": "Get a protected resource",
+        "responses": {
+          "201": {
+            "description": "Resource created successfully"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Unauthorized access"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

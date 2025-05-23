@@ -1,10 +1,6 @@
-import ts from "typescript";
+import * as ts from "typescript";
 import type { Plugin } from "@hey-api/openapi-ts";
-import type {
-  Config,
-  OpenAPIOperation,
-  OpenAPISpec
-} from "./types.js";
+import type { Config, OpenAPIOperation, OpenAPISpec } from "./types.js";
 
 export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
   const file = context.createFile({
@@ -47,6 +43,23 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
     return !!operation?.requestBody;
   };
 
+  // Helper function to check if an operation has error responses (status code >= 400)
+  const hasErrorResponses = (operation: OpenAPIOperation | undefined): boolean => {
+    if (!operation?.responses) return false;
+
+    return Object.keys(operation.responses).some(code => {
+      const codeNum = parseInt(code, 10);
+      return codeNum >= 400;
+    });
+  };
+
+  // Helper function to check if a response has content
+  const hasResponseContent = (operation: OpenAPIOperation | undefined, statusCode: string): boolean => {
+    if (!operation?.responses?.[statusCode]) return false;
+
+    return !!operation.responses[statusCode].content;
+  };
+
   // Conjunto para almacenar los tipos que realmente se utilizan
   const usedTypes = new Set<string>();
 
@@ -69,13 +82,29 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
           // Convertir operationId a formato PascalCase para los tipos
           const typeName = operationId.charAt(0).toUpperCase() + operationId.slice(1);
 
-          // Añadir al mapa de tipos de respuestas (plural)
-          operationResponsesTypes[operationId] = `${typeName}Responses`;
-          usedTypes.add(`${typeName}Responses`);
+          // Verificar si hay respuestas exitosas con contenido
+          const hasSuccessResponsesWithContent = Object.keys(methodObj.responses || {}).some(code => {
+            const codeNum = parseInt(code, 10);
+            return codeNum >= 200 && codeNum < 400 && hasResponseContent(methodObj, code);
+          });
 
-          // Añadir al mapa de tipos de errores (plural)
-          operationErrorsTypes[operationId] = `${typeName}Errors`;
-          usedTypes.add(`${typeName}Errors`);
+          // Añadir al mapa de tipos de respuestas (plural) solo si hay respuestas exitosas con contenido
+          if (hasSuccessResponsesWithContent) {
+            operationResponsesTypes[operationId] = `${typeName}Responses`;
+            usedTypes.add(`${typeName}Responses`);
+          }
+
+          // Verificar si hay respuestas de error con contenido
+          const hasErrorResponsesWithContent = Object.keys(methodObj.responses || {}).some(code => {
+            const codeNum = parseInt(code, 10);
+            return codeNum >= 400 && hasResponseContent(methodObj, code);
+          });
+
+          // Añadir al mapa de tipos de errores (plural) solo si hay respuestas de error con contenido
+          if (hasErrorResponsesWithContent) {
+            operationErrorsTypes[operationId] = `${typeName}Errors`;
+            usedTypes.add(`${typeName}Errors`);
+          }
 
           // Comprobar si necesitamos importar el tipo Data
           const hasPath = hasParameterType(methodObj, "path");
@@ -179,8 +208,8 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
           );
 
           // Crear una estructura de respuestas con el formato requerido
-          // Primero, verificamos si existen los tipos correspondientes
-          if (operationResponsesTypes[operationId] || operationErrorsTypes[operationId]) {
+          // Verificar si hay respuestas definidas en el OpenAPI
+          if (methodObj.responses && Object.keys(methodObj.responses).length > 0) {
             const responsesType = operationResponsesTypes[operationId];
             const errorsType = operationErrorsTypes[operationId];
 
@@ -236,8 +265,55 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
               );
             };
 
+            // Función para crear una propiedad de respuesta sin contenido
+            const createEmptyResponseProperty = (statusCode: string) => {
+              // Crear la propiedad headers
+              const headersProperty = ts.factory.createPropertySignature(
+                undefined,
+                ts.factory.createIdentifier("headers"),
+                undefined,
+                ts.factory.createTypeLiteralNode([
+                  ts.factory.createIndexSignature(
+                    undefined,
+                    [
+                      ts.factory.createParameterDeclaration(
+                        undefined,
+                        undefined,
+                        ts.factory.createIdentifier("name"),
+                        undefined,
+                        ts.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
+                        undefined,
+                      ),
+                    ],
+                    ts.factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
+                  ),
+                ]),
+              );
+
+              // Crear la propiedad content como opcional con never
+              const contentProperty = ts.factory.createPropertySignature(
+                undefined,
+                ts.factory.createIdentifier("content"),
+                ts.factory.createToken(ts.SyntaxKind.QuestionToken),
+                ts.factory.createKeywordTypeNode(ts.SyntaxKind.NeverKeyword),
+              );
+
+              // Crear el tipo de respuesta completo para este código de estado
+              return ts.factory.createPropertySignature(
+                undefined,
+                ts.factory.createNumericLiteral(statusCode),
+                undefined,
+                ts.factory.createTypeLiteralNode([headersProperty, contentProperty]),
+              );
+            };
+
             // Función para crear una propiedad de respuesta exitosa
             const createSuccessResponseProperty = (statusCode: string, responsesType: string) => {
+              // Verificar si la respuesta tiene contenido
+              if (!hasResponseContent(methodObj, statusCode)) {
+                return createEmptyResponseProperty(statusCode);
+              }
+
               const contentValue = ts.factory.createIndexedAccessTypeNode(
                 ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(responsesType)),
                 ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(statusCode)),
@@ -248,6 +324,11 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
 
             // Función para crear una propiedad de respuesta de error
             const createErrorResponseProperty = (statusCode: string, errorsType: string) => {
+              // Verificar si la respuesta tiene contenido
+              if (!hasResponseContent(methodObj, statusCode)) {
+                return createEmptyResponseProperty(statusCode);
+              }
+
               const contentValue = ts.factory.createIndexedAccessTypeNode(
                 ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(errorsType)),
                 ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(statusCode)),
@@ -271,19 +352,25 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
               });
             };
 
-            // Añadir propiedades para los códigos de estado de éxito
-            if (responsesType) {
-              const successCodes = getStatusCodes(methodObj, false);
-              for (const code of successCodes) {
-                responsesProperties.push(createSuccessResponseProperty(code, responsesType));
-              }
-            }
+            // Obtener todos los códigos de estado
+            const allStatusCodes = Object.keys(methodObj.responses || {});
 
-            // Añadir propiedades para los códigos de estado de error
-            if (errorsType) {
-              const errorCodes = getStatusCodes(methodObj, true);
-              for (const code of errorCodes) {
-                responsesProperties.push(createErrorResponseProperty(code, errorsType));
+            // Añadir propiedades para todos los códigos de estado
+            for (const code of allStatusCodes) {
+              const codeNum = parseInt(code, 10);
+              const isError = codeNum >= 400;
+
+              // Verificar si la respuesta tiene contenido
+              if (hasResponseContent(methodObj, code)) {
+                // Si tiene contenido, usar el tipo correspondiente
+                if (isError && errorsType) {
+                  responsesProperties.push(createErrorResponseProperty(code, errorsType));
+                } else if (!isError && responsesType) {
+                  responsesProperties.push(createSuccessResponseProperty(code, responsesType));
+                }
+              } else {
+                // Si no tiene contenido, usar createEmptyResponseProperty
+                responsesProperties.push(createEmptyResponseProperty(code));
               }
             }
 

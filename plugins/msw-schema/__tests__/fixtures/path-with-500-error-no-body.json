@@ -1,0 +1,24 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Simple API with 500 Error Response",
+    "version": "1.0.0",
+    "description": "A simple OpenAPI spec with a 500 error response without body"
+  },
+  "paths": {
+    "/server-error": {
+      "get": {
+        "operationId": "getServerError",
+        "summary": "Get a resource that may cause server error",
+        "responses": {
+          "201": {
+            "description": "Resource created successfully"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    }
+  }
+}
