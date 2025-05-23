@@ -1,75 +1,10 @@
 import ts from "typescript";
 import type { Plugin } from "@hey-api/openapi-ts";
-import type { Config } from "./types.js";
-
-// Definición de tipos para OpenAPI
-interface OpenAPIParameter {
-  name: string;
-  in: string;
-  required?: boolean;
-  description?: string;
-  schema?: Record<string, unknown>;
-}
-
-interface OpenAPIResponse {
-  description: string;
-  content?: Record<
-    string,
-    {
-      schema?: Record<string, unknown>;
-    }
-  >;
-}
-
-interface OpenAPIOperation {
-  summary?: string;
-  operationId?: string;
-  tags?: string[];
-  parameters?: OpenAPIParameter[];
-  requestBody?: {
-    content?: Record<string, unknown>;
-    required?: boolean;
-  };
-  responses?: Record<string, OpenAPIResponse>;
-}
-
-// Tipo para un objeto de ruta en OpenAPI
-interface OpenAPIPathItem {
-  parameters?: OpenAPIParameter[];
-  summary?: string;
-  description?: string;
-  get?: OpenAPIOperation;
-  put?: OpenAPIOperation;
-  post?: OpenAPIOperation;
-  delete?: OpenAPIOperation;
-  options?: OpenAPIOperation;
-  head?: OpenAPIOperation;
-  patch?: OpenAPIOperation;
-  trace?: OpenAPIOperation;
-
-  [key: string]: any; // Para otras propiedades que puedan existir
-}
-
-// Tipo para el objeto paths en OpenAPI
-interface OpenAPIPaths {
-  [path: string]: OpenAPIPathItem;
-}
-
-// Tipo para el documento OpenAPI
-interface OpenAPISpec {
-  openapi: string;
-  info: {
-    title: string;
-    version: string;
-    description?: string;
-  };
-  servers?: Array<{
-    url: string;
-    description?: string;
-  }>;
-  paths: OpenAPIPaths;
-  components?: Record<string, any>;
-}
+import type {
+  Config,
+  OpenAPIOperation,
+  OpenAPISpec
+} from "./types.js";
 
 export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
   const file = context.createFile({
@@ -104,11 +39,7 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
 
     // Check operation parameters
     const operationParams = operation.parameters || [];
-    if (operationParams.some((param) => param.in === paramType)) {
-      return true;
-    }
-
-    return false;
+    return operationParams.some((param) => param.in === paramType);
   };
 
   // Helper function to check if a request body exists in the operation
@@ -257,10 +188,7 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
             const responsesProperties = [];
 
             // Función base para crear una propiedad de respuesta con headers y content
-            const createBaseResponseProperty = (
-              statusCode: string,
-              contentValue: ts.TypeNode
-            ) => {
+            const createBaseResponseProperty = (statusCode: string, contentValue: ts.TypeNode) => {
               // Crear la propiedad headers
               const headersProperty = ts.factory.createPropertySignature(
                 undefined,
@@ -309,9 +237,9 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
             };
 
             // Función para crear una propiedad de respuesta exitosa
-            const createSuccessResponseProperty = (statusCode: string) => {
+            const createSuccessResponseProperty = (statusCode: string, responsesType: string) => {
               const contentValue = ts.factory.createIndexedAccessTypeNode(
-                ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(responsesType!)),
+                ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(responsesType)),
                 ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(statusCode)),
               );
 
@@ -319,9 +247,9 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
             };
 
             // Función para crear una propiedad de respuesta de error
-            const createErrorResponseProperty = (statusCode: string) => {
+            const createErrorResponseProperty = (statusCode: string, errorsType: string) => {
               const contentValue = ts.factory.createIndexedAccessTypeNode(
-                ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(errorsType!)),
+                ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(errorsType)),
                 ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(statusCode)),
               );
 
@@ -347,7 +275,7 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
             if (responsesType) {
               const successCodes = getStatusCodes(methodObj, false);
               for (const code of successCodes) {
-                responsesProperties.push(createSuccessResponseProperty(code));
+                responsesProperties.push(createSuccessResponseProperty(code, responsesType));
               }
             }
 
@@ -355,7 +283,7 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
             if (errorsType) {
               const errorCodes = getStatusCodes(methodObj, true);
               for (const code of errorCodes) {
-                responsesProperties.push(createErrorResponseProperty(code));
+                responsesProperties.push(createErrorResponseProperty(code, errorsType));
               }
             }
 
