@@ -1,20 +1,32 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  getPetByIdOptions,
-  getPetsOptions,
-} from "../generated/client/@tanstack/react-query.gen.js";
 import type { Pet } from "../generated/client/index.js";
+import { getPets, getPetByIdOptions } from "../generated/client/index.js";
 
 export const App = () => {
-  const {
-    data: pets,
-    isLoading: loadingPets,
-    error: errorPets,
-  } = useQuery({
-    ...getPetsOptions(),
-  });
+  const [pets, setPets] = useState<Pet[] | undefined>();
+  const [loadingPets, setLoadingPets] = useState(true);
+  const [errorPets, setErrorPets] = useState<Error | undefined>();
 
-  const petId = 1;
+  useEffect(() => {
+    const fetchPets = async () => {
+      try {
+        setLoadingPets(true);
+        setErrorPets(undefined);
+        const response = await getPets();
+        setPets(response.data || []);
+      } catch (error) {
+        setErrorPets(error instanceof Error ? error : new Error('Error desconocido'));
+      } finally {
+        setLoadingPets(false);
+      }
+    };
+
+    fetchPets();
+  }, []);
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const petId = urlParams.get('petId') ? Number(urlParams.get('petId')) : 1;
   const {
     data: singlePet,
     isLoading: loadingPet,

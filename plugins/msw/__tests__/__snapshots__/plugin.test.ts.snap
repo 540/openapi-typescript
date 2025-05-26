@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`msw-schema plugin should generate correct TypeScript interfaces for basic API endpoints 1`] = `
+exports[`msw plugin should generate correct TypeScript interfaces for basic API endpoints 1`] = `
 "import { createOpenApiHttp as baseCreateOpenApiHttp } from "openapi-msw";
 export const createOpenApiHttp: typeof baseCreateOpenApiHttp<paths> = baseCreateOpenApiHttp;
 export interface paths {
@@ -22,58 +22,17 @@ export interface paths {
         trace?: never;
     };
 }
-export type webhooks = Record<string, never>;
-export interface components {
-    schemas: never;
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
-}
-export type $defs = Record<string, never>;
-export interface operations {
-    createResource: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Resource created successfully */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-}
 "
 `;
 
-exports[`msw-schema plugin should generate correct TypeScript interfaces for empty OpenAPI spec 1`] = `
+exports[`msw plugin should generate correct TypeScript interfaces for empty OpenAPI spec 1`] = `
 "import { createOpenApiHttp as baseCreateOpenApiHttp } from "openapi-msw";
 export const createOpenApiHttp: typeof baseCreateOpenApiHttp<paths> = baseCreateOpenApiHttp;
 export type paths = Record<string, never>;
-export type webhooks = Record<string, never>;
-export interface components {
-    schemas: never;
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
-}
-export type $defs = Record<string, never>;
-export type operations = Record<string, never>;
 "
 `;
 
-exports[`msw-schema plugin should generate correct TypeScript interfaces for endpoints with complex responses 1`] = `
+exports[`msw plugin should generate correct TypeScript interfaces for endpoints with complex responses 1`] = `
 "import { createOpenApiHttp as baseCreateOpenApiHttp } from "openapi-msw";
 export const createOpenApiHttp: typeof baseCreateOpenApiHttp<paths> = baseCreateOpenApiHttp;
 export interface paths {
@@ -95,45 +54,10 @@ export interface paths {
         trace?: never;
     };
 }
-export type webhooks = Record<string, never>;
-export interface components {
-    schemas: never;
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
-}
-export type $defs = Record<string, never>;
-export interface operations {
-    getResource: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Resource retrieved successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id?: string;
-                        name?: string;
-                    };
-                };
-            };
-        };
-    };
-}
 "
 `;
 
-exports[`msw-schema plugin should generate correct TypeScript interfaces for endpoints with request bodies 1`] = `
+exports[`msw plugin should generate correct TypeScript interfaces for endpoints with request bodies 1`] = `
 "import { createOpenApiHttp as baseCreateOpenApiHttp } from "openapi-msw";
 export const createOpenApiHttp: typeof baseCreateOpenApiHttp<paths> = baseCreateOpenApiHttp;
 export interface paths {
@@ -153,43 +77,6 @@ export interface paths {
         head?: never;
         patch?: never;
         trace?: never;
-    };
-}
-export type webhooks = Record<string, never>;
-export interface components {
-    schemas: never;
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
-}
-export type $defs = Record<string, never>;
-export interface operations {
-    createResourceWithBody: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    name: string;
-                    description?: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Resource created successfully */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
     };
 }
 "

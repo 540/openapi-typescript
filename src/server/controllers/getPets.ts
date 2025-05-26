@@ -1,10 +1,6 @@
 import type { RouteHandlers } from "../../generated/server/fastify.gen.js";
+import { pets } from "./pets.js";
 
-export const getPets: RouteHandlers["getPets"] = async (request, reply) => {
-  await reply.status(200).send([
-    { id: 1, name: "Fluffy", tag: "cat" },
-    { id: 2, name: "Rex", tag: "dog" },
-    { id: 3, name: "Tweety", tag: "bird" },
-    { id: 4, name: "Goldie", tag: "fish" },
-  ]);
+export const getPets: RouteHandlers["getPets"] = (request, reply) => {
+   reply.status(200).send(pets);
 };

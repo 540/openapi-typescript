@@ -1,32 +1,27 @@
 import { generateCode, loadFixture } from "./utils.js";
 
 describe("msw plugin", () => {
-  test("should generate correct TypeScript interfaces for empty OpenAPI spec", async () => {
-    const spec = loadFixture("minimal-openapi-no-paths.json");
+  const testCases = [
+    {
+      fixture: "minimal-openapi-no-paths.json",
+      description: "should generate correct TypeScript interfaces for empty OpenAPI spec",
+    },
+    {
+      fixture: "simple-path-201-no-body.json",
+      description: "should generate correct TypeScript interfaces for basic API endpoints",
+    },
+    {
+      fixture: "path-with-request-body.json",
+      description: "should generate correct TypeScript interfaces for endpoints with request bodies",
+    },
+    {
+      fixture: "path-with-200-response-object.json",
+      description: "should generate correct TypeScript interfaces for endpoints with complex responses",
+    },
+  ];
 
-    const generatedCode = await generateCode(spec);
-
-    expect(generatedCode).toMatchSnapshot();
-  });
-
-  test("should generate correct TypeScript interfaces for basic API endpoints", async () => {
-    const spec = loadFixture("simple-path-201-no-body.json");
-
-    const generatedCode = await generateCode(spec);
-
-    expect(generatedCode).toMatchSnapshot();
-  });
-
-  test("should generate correct TypeScript interfaces for endpoints with request bodies", async () => {
-    const spec = loadFixture("path-with-request-body.json");
-
-    const generatedCode = await generateCode(spec);
-
-    expect(generatedCode).toMatchSnapshot();
-  });
-
-  test("should generate correct TypeScript interfaces for endpoints with complex responses", async () => {
-    const spec = loadFixture("path-with-200-response-object.json");
+  it.each(testCases)("$description", async ({ fixture }) => {
+    const spec = loadFixture(fixture);
 
     const generatedCode = await generateCode(spec);
 
