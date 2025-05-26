@@ -25,7 +25,7 @@ export const loadFixture = (filename: string): OpenAPISpec => {
   return JSON.parse(fixtureContent) as OpenAPISpec;
 };
 
-export const generateCode = (spec: OpenAPISpec): string => {
+export const generateCode = async (spec: OpenAPISpec): Promise<string> => {
   const nodes: ts.Node[] = [];
   const context = {
     spec,
@@ -38,7 +38,7 @@ export const generateCode = (spec: OpenAPISpec): string => {
     },
   } as unknown as IR.Context;
 
-  handler({ context, plugin: { name: "msw-schema", output: "test.ts", exportFromIndex: true } });
+  await handler({ context, plugin: { name: "msw-schema", output: "test.ts", exportFromIndex: true } });
 
   if (nodes.length === 0) {
     throw new Error("No se encontró la interfaz Paths");

@@ -9,6 +9,7 @@ export const defaultConfig: Plugin.Config<Config> = {
   _handlerLegacy: () => {},
   name: "msw-schema",
   output: "msw-schema",
+  exportFromIndex: false,
 };
 
 export const defineConfig: Plugin.DefineConfig<Config> = (config) => ({

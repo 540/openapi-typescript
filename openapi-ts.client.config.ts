@@ -6,16 +6,16 @@ export default defineConfig({
   output: {
     format: "prettier",
     lint: "eslint",
-    path: "./src/frontend/client",
+    path: "./src/generated/client",
   },
   plugins: [
-    "@hey-api/client-fetch",
-    "@tanstack/react-query",
+    { name: "@hey-api/client-fetch", exportFromIndex: true },
+    { name: "@tanstack/react-query", exportFromIndex: true },
     "zod",
     {
       name: "@hey-api/sdk",
       validator: true,
     },
-    defineMswSchemaPluginConfig({}),
+    defineMswSchemaPluginConfig({ exportFromIndex: true }),
   ],
 });

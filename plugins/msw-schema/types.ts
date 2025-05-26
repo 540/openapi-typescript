@@ -9,6 +9,13 @@ export interface Config {
    * @default 'msw-schema'
    */
   output?: string;
+  /**
+   * Should the exports from the generated files be re-exported in the index
+   * barrel file?
+   *
+   * @default false
+   */
+  exportFromIndex?: boolean;
 }
 
 export interface OpenAPIOperation {

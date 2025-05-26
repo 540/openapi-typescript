@@ -1,4 +1,4 @@
-import { createOpenApiHttp } from "../../msw/index.js";
+import { createOpenApiHttp } from "../../generated/client/index.js";
 import type { Pet } from "../../generated/client/index.js";
 
 // Datos de ejemplo para los mocks

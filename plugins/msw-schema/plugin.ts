@@ -1,456 +1,74 @@
 import * as ts from "typescript";
+import path from "path";
+import fs from "fs";
+import openapiTS, { astToString, type OpenAPI3 } from "openapi-typescript";
 import type { Plugin } from "@hey-api/openapi-ts";
-import type { Config, OpenAPIOperation, OpenAPISpec } from "./types.js";
+import type { Config } from "./types.js";
 
-export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
+export const handler: Plugin.Handler<Config> = async ({ context, plugin }) => {
+  // Crear el archivo msw-schema.gen.ts
   const file = context.createFile({
     id: plugin.name,
     path: plugin.output,
+    exportFromIndex: plugin.exportFromIndex,
   });
 
-  // Tratar context.spec como OpenAPISpec
-  const spec = context.spec as unknown as OpenAPISpec;
-
-  // Obtener las rutas del spec
-  const pathKeys = Object.keys(spec.paths ?? {});
-
-  // Lista de métodos HTTP que queremos comprobar
-  const httpMethods = [
-    "get",
-    "put",
-    "post",
-    "delete",
-    "options",
-    "head",
-    "patch",
-    "trace",
-  ] as const;
-
-  // Helper function to check if a parameter type exists in the operation
-  const hasParameterType = (
-    operation: OpenAPIOperation | undefined,
-    paramType: string,
-  ): boolean => {
-    if (!operation) return false;
-
-    // Check operation parameters
-    const operationParams = operation.parameters || [];
-    return operationParams.some((param) => param.in === paramType);
-  };
-
-  // Helper function to check if a request body exists in the operation
-  const hasRequestBody = (operation: OpenAPIOperation | undefined): boolean => {
-    return !!operation?.requestBody;
-  };
-
-  // Helper function to check if an operation has error responses (status code >= 400)
-  const hasErrorResponses = (operation: OpenAPIOperation | undefined): boolean => {
-    if (!operation?.responses) return false;
-
-    return Object.keys(operation.responses).some(code => {
-      const codeNum = parseInt(code, 10);
-      return codeNum >= 400;
-    });
-  };
-
-  // Helper function to check if a response has content
-  const hasResponseContent = (operation: OpenAPIOperation | undefined, statusCode: string): boolean => {
-    if (!operation?.responses?.[statusCode]) return false;
-
-    return !!operation.responses[statusCode].content;
-  };
-
-  // Conjunto para almacenar los tipos que realmente se utilizan
-  const usedTypes = new Set<string>();
-
-  // Mapa para convertir operationId a tipos de respuestas
-  const operationResponsesTypes: Record<string, string> = {};
-
-  // Mapa para convertir operationId a tipos de errores
-  const operationErrorsTypes: Record<string, string> = {};
-
-  // Llenar los mapas de tipos de respuesta y error
-  // Recorremos todas las rutas y métodos para encontrar los operationId
-  for (const path of pathKeys) {
-    const pathObj = spec.paths[path] ?? {};
-
-    for (const method of httpMethods) {
-      const methodObj = pathObj[method] as OpenAPIOperation | undefined;
-      if (methodObj) {
-        const operationId = methodObj.operationId;
-        if (operationId) {
-          // Convertir operationId a formato PascalCase para los tipos
-          const typeName = operationId.charAt(0).toUpperCase() + operationId.slice(1);
-
-          // Verificar si hay respuestas exitosas con contenido
-          const hasSuccessResponsesWithContent = Object.keys(methodObj.responses || {}).some(code => {
-            const codeNum = parseInt(code, 10);
-            return codeNum >= 200 && codeNum < 400 && hasResponseContent(methodObj, code);
-          });
-
-          // Añadir al mapa de tipos de respuestas (plural) solo si hay respuestas exitosas con contenido
-          if (hasSuccessResponsesWithContent) {
-            operationResponsesTypes[operationId] = `${typeName}Responses`;
-            usedTypes.add(`${typeName}Responses`);
-          }
-
-          // Verificar si hay respuestas de error con contenido
-          const hasErrorResponsesWithContent = Object.keys(methodObj.responses || {}).some(code => {
-            const codeNum = parseInt(code, 10);
-            return codeNum >= 400 && hasResponseContent(methodObj, code);
-          });
-
-          // Añadir al mapa de tipos de errores (plural) solo si hay respuestas de error con contenido
-          if (hasErrorResponsesWithContent) {
-            operationErrorsTypes[operationId] = `${typeName}Errors`;
-            usedTypes.add(`${typeName}Errors`);
-          }
-
-          // Comprobar si necesitamos importar el tipo Data
-          const hasPath = hasParameterType(methodObj, "path");
-          const hasQuery = hasParameterType(methodObj, "query");
-          const hasBody = hasRequestBody(methodObj);
-
-          // Solo añadir el tipo Data si se utiliza alguna de sus propiedades
-          if (hasPath || hasQuery || hasBody) {
-            usedTypes.add(`${typeName}Data`);
-          }
-        }
-      }
-    }
-  }
-
-  // Convertir el conjunto a un array y ordenarlo
-  const typesToImport = Array.from(usedTypes).sort();
-
-  // Crear los elementos de importación con nombre
-  const namedImports = typesToImport.map((type) =>
-    ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier(type)),
+  // Crear la importación de openapi-msw
+  const openapiMswImport = ts.factory.createImportDeclaration(
+    undefined,
+    ts.factory.createImportClause(
+      false,
+      undefined,
+      ts.factory.createNamedImports([
+        ts.factory.createImportSpecifier(
+          false,
+          ts.factory.createIdentifier("createOpenApiHttp"),
+          ts.factory.createIdentifier("baseCreateOpenApiHttp")
+        )
+      ])
+    ),
+    ts.factory.createStringLiteral("openapi-msw")
   );
 
-  // Crear la declaración de importación con 'import type'
-  const importDeclaration = ts.factory.createImportDeclaration(
-    undefined,
-    ts.factory.createImportClause(true, undefined, ts.factory.createNamedImports(namedImports)),
-    ts.factory.createStringLiteral("./types.gen.js"),
+  // Ya no necesitamos importar paths desde un archivo externo
+  // porque lo vamos a generar en el mismo archivo
+
+  // Crear la exportación de createOpenApiHttp tipado con paths (sin ejecutar)
+  const createOpenApiHttpExport = ts.factory.createVariableStatement(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    ts.factory.createVariableDeclarationList(
+      [
+        ts.factory.createVariableDeclaration(
+          ts.factory.createIdentifier("createOpenApiHttp"),
+          undefined,
+          ts.factory.createTypeReferenceNode(
+            ts.factory.createIdentifier("typeof baseCreateOpenApiHttp"),
+            [ts.factory.createTypeReferenceNode(ts.factory.createIdentifier("paths"))]
+          ),
+          ts.factory.createIdentifier("baseCreateOpenApiHttp")
+        )
+      ],
+      ts.NodeFlags.Const
+    )
   );
 
   // Añadir la importación al archivo
-  file.add(importDeclaration);
+  file.add(openapiMswImport);
 
-  // Ya no necesitamos estas funciones porque vamos a derivar los parámetros directamente del tipo Data
+  // Añadir la exportación al archivo
+  file.add(createOpenApiHttpExport);
 
-  // Crear una propiedad para cada ruta
-  const members = pathKeys.map((path) => {
-    const pathObj = spec.paths[path] ?? {};
+  // Generar el tipo paths usando openapi-typescript y añadirlo al final del archivo
+  try {
+    // Usar la API programática de openapi-typescript
+    const ast = await openapiTS(context.spec as OpenAPI3);
 
-    // Obtener los parámetros a nivel de ruta (no utilizados actualmente)
-    // const pathParameters = pathObj.parameters || [];
-
-    // Crear propiedades para cada método HTTP
-    const methodMembers = httpMethods.map((method) => {
-      // Comprobar si el método existe en la ruta
-      const methodExists = !!pathObj[method];
-      const methodObj = pathObj[method] as OpenAPIOperation | undefined;
-
-      // Si el método existe, crear una propiedad con la estructura de parámetros
-      if (methodExists && methodObj) {
-        // Obtener el operationId para este método
-        const operationId = methodObj.operationId;
-
-        // Crear un array de propiedades para el método
-        const methodProperties = [];
-
-        // Si hay un operationId, añadir las propiedades derivadas del tipo Data
-        if (operationId) {
-          // Convertir operationId a formato PascalCase para los tipos
-          const typeName = operationId.charAt(0).toUpperCase() + operationId.slice(1);
-
-          // Crear una referencia al tipo Data para este operationId
-          const dataType = `${typeName}Data`;
-
-          // Añadir la propiedad parameters derivada del tipo Data
-          // Crear un tipo indexado para acceder a las propiedades query y path (sin header ni cookie)
-          const parametersProperties = ["query", "path"].map((paramType) => {
-            // Check if this parameter type exists in the operation
-            const paramExists = hasParameterType(methodObj, paramType);
-
-            // If the parameter doesn't exist, use ?: never directly
-            if (!paramExists) {
-              return ts.factory.createPropertySignature(
-                undefined,
-                ts.factory.createIdentifier(paramType),
-                ts.factory.createToken(ts.SyntaxKind.QuestionToken),
-                ts.factory.createKeywordTypeNode(ts.SyntaxKind.NeverKeyword),
-              );
-            }
-
-            // Otherwise, reference the Data type
-            return ts.factory.createPropertySignature(
-              undefined,
-              ts.factory.createIdentifier(paramType),
-              undefined,
-              ts.factory.createIndexedAccessTypeNode(
-                ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(dataType)),
-                ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(paramType)),
-              ),
-            );
-          });
-
-          // Añadir la propiedad parameters
-          methodProperties.push(
-            ts.factory.createPropertySignature(
-              undefined,
-              ts.factory.createIdentifier("parameters"),
-              undefined,
-              ts.factory.createTypeLiteralNode(parametersProperties),
-            ),
-          );
-
-          // Crear una estructura de respuestas con el formato requerido
-          // Verificar si hay respuestas definidas en el OpenAPI
-          if (methodObj.responses && Object.keys(methodObj.responses).length > 0) {
-            const responsesType = operationResponsesTypes[operationId];
-            const errorsType = operationErrorsTypes[operationId];
-
-            // Crear un objeto literal para las respuestas
-            const responsesProperties = [];
-
-            // Función base para crear una propiedad de respuesta con headers y content
-            const createBaseResponseProperty = (statusCode: string, contentValue: ts.TypeNode) => {
-              // Crear la propiedad headers
-              const headersProperty = ts.factory.createPropertySignature(
-                undefined,
-                ts.factory.createIdentifier("headers"),
-                undefined,
-                ts.factory.createTypeLiteralNode([
-                  ts.factory.createIndexSignature(
-                    undefined,
-                    [
-                      ts.factory.createParameterDeclaration(
-                        undefined,
-                        undefined,
-                        ts.factory.createIdentifier("name"),
-                        undefined,
-                        ts.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
-                        undefined,
-                      ),
-                    ],
-                    ts.factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
-                  ),
-                ]),
-              );
-
-              // Crear la propiedad content con application/json
-              const contentProperty = ts.factory.createPropertySignature(
-                undefined,
-                ts.factory.createIdentifier("content"),
-                undefined,
-                ts.factory.createTypeLiteralNode([
-                  ts.factory.createPropertySignature(
-                    undefined,
-                    ts.factory.createStringLiteral("application/json"),
-                    undefined,
-                    contentValue,
-                  ),
-                ]),
-              );
-
-              // Crear el tipo de respuesta completo para este código de estado
-              return ts.factory.createPropertySignature(
-                undefined,
-                ts.factory.createNumericLiteral(statusCode),
-                undefined,
-                ts.factory.createTypeLiteralNode([headersProperty, contentProperty]),
-              );
-            };
-
-            // Función para crear una propiedad de respuesta sin contenido
-            const createEmptyResponseProperty = (statusCode: string) => {
-              // Crear la propiedad headers
-              const headersProperty = ts.factory.createPropertySignature(
-                undefined,
-                ts.factory.createIdentifier("headers"),
-                undefined,
-                ts.factory.createTypeLiteralNode([
-                  ts.factory.createIndexSignature(
-                    undefined,
-                    [
-                      ts.factory.createParameterDeclaration(
-                        undefined,
-                        undefined,
-                        ts.factory.createIdentifier("name"),
-                        undefined,
-                        ts.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
-                        undefined,
-                      ),
-                    ],
-                    ts.factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword),
-                  ),
-                ]),
-              );
-
-              // Crear la propiedad content como opcional con never
-              const contentProperty = ts.factory.createPropertySignature(
-                undefined,
-                ts.factory.createIdentifier("content"),
-                ts.factory.createToken(ts.SyntaxKind.QuestionToken),
-                ts.factory.createKeywordTypeNode(ts.SyntaxKind.NeverKeyword),
-              );
-
-              // Crear el tipo de respuesta completo para este código de estado
-              return ts.factory.createPropertySignature(
-                undefined,
-                ts.factory.createNumericLiteral(statusCode),
-                undefined,
-                ts.factory.createTypeLiteralNode([headersProperty, contentProperty]),
-              );
-            };
-
-            // Función para crear una propiedad de respuesta exitosa
-            const createSuccessResponseProperty = (statusCode: string, responsesType: string) => {
-              // Verificar si la respuesta tiene contenido
-              if (!hasResponseContent(methodObj, statusCode)) {
-                return createEmptyResponseProperty(statusCode);
-              }
-
-              const contentValue = ts.factory.createIndexedAccessTypeNode(
-                ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(responsesType)),
-                ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(statusCode)),
-              );
-
-              return createBaseResponseProperty(statusCode, contentValue);
-            };
-
-            // Función para crear una propiedad de respuesta de error
-            const createErrorResponseProperty = (statusCode: string, errorsType: string) => {
-              // Verificar si la respuesta tiene contenido
-              if (!hasResponseContent(methodObj, statusCode)) {
-                return createEmptyResponseProperty(statusCode);
-              }
-
-              const contentValue = ts.factory.createIndexedAccessTypeNode(
-                ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(errorsType)),
-                ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(statusCode)),
-              );
-
-              return createBaseResponseProperty(statusCode, contentValue);
-            };
-
-            // Obtener los códigos de estado de las respuestas y errores del spec
-            const getStatusCodes = (operation: OpenAPIOperation | undefined, isError: boolean) => {
-              if (!operation?.responses) return [];
-
-              // Filtrar los códigos de estado según si son de éxito o error
-              return Object.keys(operation.responses).filter((code) => {
-                const codeNum = parseInt(code, 10);
-                if (isError) {
-                  return codeNum >= 400; // Códigos de error
-                } else {
-                  return codeNum >= 200 && codeNum < 400; // Códigos de éxito
-                }
-              });
-            };
-
-            // Obtener todos los códigos de estado
-            const allStatusCodes = Object.keys(methodObj.responses || {});
-
-            // Añadir propiedades para todos los códigos de estado
-            for (const code of allStatusCodes) {
-              const codeNum = parseInt(code, 10);
-              const isError = codeNum >= 400;
-
-              // Verificar si la respuesta tiene contenido
-              if (hasResponseContent(methodObj, code)) {
-                // Si tiene contenido, usar el tipo correspondiente
-                if (isError && errorsType) {
-                  responsesProperties.push(createErrorResponseProperty(code, errorsType));
-                } else if (!isError && responsesType) {
-                  responsesProperties.push(createSuccessResponseProperty(code, responsesType));
-                }
-              } else {
-                // Si no tiene contenido, usar createEmptyResponseProperty
-                responsesProperties.push(createEmptyResponseProperty(code));
-              }
-            }
-
-            // Añadir la propiedad responses con el tipo de objeto literal
-            methodProperties.push(
-              ts.factory.createPropertySignature(
-                undefined,
-                ts.factory.createIdentifier("responses"),
-                undefined,
-                ts.factory.createTypeLiteralNode(responsesProperties),
-              ),
-            );
-          }
-
-          // Añadir la propiedad requestBody
-          // Check if this operation has a request body
-          const hasBody = hasRequestBody(methodObj);
-
-          if (!hasBody) {
-            // If there's no request body, use ?: never directly
-            methodProperties.push(
-              ts.factory.createPropertySignature(
-                undefined,
-                ts.factory.createIdentifier("requestBody"),
-                ts.factory.createToken(ts.SyntaxKind.QuestionToken),
-                ts.factory.createKeywordTypeNode(ts.SyntaxKind.NeverKeyword),
-              ),
-            );
-          } else {
-            // Otherwise, reference the Data type
-            const bodyAccessExpression = ts.factory.createIndexedAccessTypeNode(
-              ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(dataType)),
-              ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral("body")),
-            );
-
-            // Añadir la propiedad requestBody
-            methodProperties.push(
-              ts.factory.createPropertySignature(
-                undefined,
-                ts.factory.createIdentifier("requestBody"),
-                undefined,
-                bodyAccessExpression,
-              ),
-            );
-          }
-        }
-
-        return ts.factory.createPropertySignature(
-          undefined,
-          ts.factory.createIdentifier(method),
-          undefined,
-          ts.factory.createTypeLiteralNode(methodProperties),
-        );
-      } else {
-        // Si el método no existe, crear una propiedad opcional con valor never
-        return ts.factory.createPropertySignature(
-          undefined,
-          ts.factory.createIdentifier(method),
-          ts.factory.createToken(ts.SyntaxKind.QuestionToken),
-          ts.factory.createKeywordTypeNode(ts.SyntaxKind.NeverKeyword),
-        );
-      }
+    // Añadir directamente los nodos AST generados por openapi-typescript
+    ast.forEach(node => {
+      file.add(node);
     });
-
-    // Crear un nodo de tipo literal con las propiedades de los métodos HTTP
-    return ts.factory.createPropertySignature(
-      undefined,
-      ts.factory.createStringLiteral(path),
-      undefined,
-      ts.factory.createTypeLiteralNode(methodMembers),
-    );
-  });
-
-  const interfaceDeclaration = ts.factory.createInterfaceDeclaration(
-    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
-    "Paths",
-    undefined,
-    undefined,
-    members,
-  );
-
-  file.add(interfaceDeclaration);
+  } catch (error) {
+    console.error("Error generando tipos paths:", error);
+    throw error;
+  }
 };
