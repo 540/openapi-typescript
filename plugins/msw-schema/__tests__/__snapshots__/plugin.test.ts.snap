@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`msw-schema plugin should generate Paths interface for simple path with 201 response and no body 1`] = `
+exports[`msw-schema plugin should generate correct TypeScript interfaces for basic API endpoints 1`] = `
 "import { createOpenApiHttp as baseCreateOpenApiHttp } from "openapi-msw";
 export const createOpenApiHttp: typeof baseCreateOpenApiHttp<paths> = baseCreateOpenApiHttp;
 export interface paths {
@@ -55,7 +55,25 @@ export interface operations {
 "
 `;
 
-exports[`msw-schema plugin should generate Paths interface with 200 response containing an object 1`] = `
+exports[`msw-schema plugin should generate correct TypeScript interfaces for empty OpenAPI spec 1`] = `
+"import { createOpenApiHttp as baseCreateOpenApiHttp } from "openapi-msw";
+export const createOpenApiHttp: typeof baseCreateOpenApiHttp<paths> = baseCreateOpenApiHttp;
+export type paths = Record<string, never>;
+export type webhooks = Record<string, never>;
+export interface components {
+    schemas: never;
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
+}
+export type $defs = Record<string, never>;
+export type operations = Record<string, never>;
+"
+`;
+
+exports[`msw-schema plugin should generate correct TypeScript interfaces for endpoints with complex responses 1`] = `
 "import { createOpenApiHttp as baseCreateOpenApiHttp } from "openapi-msw";
 export const createOpenApiHttp: typeof baseCreateOpenApiHttp<paths> = baseCreateOpenApiHttp;
 export interface paths {
@@ -115,250 +133,7 @@ export interface operations {
 "
 `;
 
-exports[`msw-schema plugin should generate Paths interface with 401 error response 1`] = `
-"import { createOpenApiHttp as baseCreateOpenApiHttp } from "openapi-msw";
-export const createOpenApiHttp: typeof baseCreateOpenApiHttp<paths> = baseCreateOpenApiHttp;
-export interface paths {
-    "/protected-resource": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get a protected resource */
-        get: operations["getProtectedResource"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-}
-export type webhooks = Record<string, never>;
-export interface components {
-    schemas: never;
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
-}
-export type $defs = Record<string, never>;
-export interface operations {
-    getProtectedResource: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Resource created successfully */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @example Unauthorized access */
-                        error?: string;
-                    };
-                };
-            };
-        };
-    };
-}
-"
-`;
-
-exports[`msw-schema plugin should generate Paths interface with 500 error response without body 1`] = `
-"import { createOpenApiHttp as baseCreateOpenApiHttp } from "openapi-msw";
-export const createOpenApiHttp: typeof baseCreateOpenApiHttp<paths> = baseCreateOpenApiHttp;
-export interface paths {
-    "/server-error": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get a resource that may cause server error */
-        get: operations["getServerError"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-}
-export type webhooks = Record<string, never>;
-export interface components {
-    schemas: never;
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
-}
-export type $defs = Record<string, never>;
-export interface operations {
-    getServerError: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Resource created successfully */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-}
-"
-`;
-
-exports[`msw-schema plugin should generate Paths interface with path parameters 1`] = `
-"import { createOpenApiHttp as baseCreateOpenApiHttp } from "openapi-msw";
-export const createOpenApiHttp: typeof baseCreateOpenApiHttp<paths> = baseCreateOpenApiHttp;
-export interface paths {
-    "/resources/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get a resource by ID */
-        get: operations["getResourceById"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-}
-export type webhooks = Record<string, never>;
-export interface components {
-    schemas: never;
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
-}
-export type $defs = Record<string, never>;
-export interface operations {
-    getResourceById: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Resource retrieved successfully */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-}
-"
-`;
-
-exports[`msw-schema plugin should generate Paths interface with query parameters 1`] = `
-"import { createOpenApiHttp as baseCreateOpenApiHttp } from "openapi-msw";
-export const createOpenApiHttp: typeof baseCreateOpenApiHttp<paths> = baseCreateOpenApiHttp;
-export interface paths {
-    "/resources": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List resources with optional filtering */
-        get: operations["listResources"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-}
-export type webhooks = Record<string, never>;
-export interface components {
-    schemas: never;
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
-}
-export type $defs = Record<string, never>;
-export interface operations {
-    listResources: {
-        parameters: {
-            query?: {
-                filter?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Resources retrieved successfully */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-}
-"
-`;
-
-exports[`msw-schema plugin should generate Paths interface with request body and 201 response without body 1`] = `
+exports[`msw-schema plugin should generate correct TypeScript interfaces for endpoints with request bodies 1`] = `
 "import { createOpenApiHttp as baseCreateOpenApiHttp } from "openapi-msw";
 export const createOpenApiHttp: typeof baseCreateOpenApiHttp<paths> = baseCreateOpenApiHttp;
 export interface paths {
@@ -417,23 +192,5 @@ export interface operations {
         };
     };
 }
-"
-`;
-
-exports[`msw-schema plugin should generate empty Paths interface for minimal OpenAPI with no paths 1`] = `
-"import { createOpenApiHttp as baseCreateOpenApiHttp } from "openapi-msw";
-export const createOpenApiHttp: typeof baseCreateOpenApiHttp<paths> = baseCreateOpenApiHttp;
-export type paths = Record<string, never>;
-export type webhooks = Record<string, never>;
-export interface components {
-    schemas: never;
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
-}
-export type $defs = Record<string, never>;
-export type operations = Record<string, never>;
 "
 `;
