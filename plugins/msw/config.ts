@@ -7,8 +7,8 @@ export const defaultConfig: Plugin.Config<Config> = {
   _dependencies: [],
   _handler: handler,
   _handlerLegacy: () => {},
-  name: "msw-schema",
-  output: "msw-schema",
+  name: "msw",
+  output: "msw",
   exportFromIndex: false,
 };
 

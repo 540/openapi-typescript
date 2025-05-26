@@ -1,6 +1,6 @@
 import { generateCode, loadFixture } from "./utils.js";
 
-describe("msw-schema plugin", () => {
+describe("msw plugin", () => {
   test("should generate correct TypeScript interfaces for empty OpenAPI spec", async () => {
     const spec = loadFixture("minimal-openapi-no-paths.json");
 

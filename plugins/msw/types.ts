@@ -2,11 +2,11 @@ export interface Config {
   /**
    * Plugin name. Must be unique.
    */
-  name: "msw-schema";
+  name: "msw";
   /**
    * Name of the generated file.
    *
-   * @default 'msw-schema'
+   * @default 'msw'
    */
   output?: string;
   /**

@@ -6,7 +6,7 @@ import type { Plugin } from "@hey-api/openapi-ts";
 import type { Config } from "./types.js";
 
 export const handler: Plugin.Handler<Config> = async ({ context, plugin }) => {
-  // Crear el archivo msw-schema.gen.ts
+  // Crear el archivo msw.gen.ts
   const file = context.createFile({
     id: plugin.name,
     path: plugin.output,

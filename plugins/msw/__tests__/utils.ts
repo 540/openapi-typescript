@@ -38,7 +38,7 @@ export const generateCode = async (spec: OpenAPISpec): Promise<string> => {
     },
   } as unknown as IR.Context;
 
-  await handler({ context, plugin: { name: "msw-schema", output: "test.ts", exportFromIndex: true } });
+  await handler({ context, plugin: { name: "msw", output: "test.ts", exportFromIndex: true } });
 
   if (nodes.length === 0) {
     throw new Error("No se encontró la interfaz Paths");

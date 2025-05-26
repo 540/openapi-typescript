@@ -3,4 +3,4 @@ export * from "./types.gen.js";
 export * from "./client.gen.js";
 export * from "./sdk.gen.js";
 export * from "./@tanstack/react-query.gen.js";
-export * from "./msw-schema.gen.js";
+export * from "./msw.gen.js";
