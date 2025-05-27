@@ -198,10 +198,10 @@ Los tests utilizan SWC para mayor velocidad y soporte para ESM.
 ### Plugins personalizados
 
 #### Plugin MSW (`plugins/msw/`)
-Genera automáticamente la función `createOpenApiHttp` tipada para MSW basada en la especificación OpenAPI.
+Genera automáticamente tipos TypeScript y la función `createOpenApiHttp` tipada para MSW (Mock Service Worker). Este plugin convierte la especificación OpenAPI en interfaces TypeScript que definen exactamente qué endpoints están disponibles, qué parámetros aceptan, qué cuerpos de petición esperan y qué respuestas devuelven. Esto garantiza que los mocks en desarrollo sean completamente consistentes con la API real, evitando discrepancias entre el comportamiento simulado y el real.
 
 #### Plugin Spec (`plugins/spec/`)
-Genera configuración específica para Fastify basada en la especificación OpenAPI.
+Genera una representación TypeScript de la especificación OpenAPI completa como un objeto constante tipado. Este plugin convierte el archivo YAML/JSON de OpenAPI en código TypeScript que puede ser importado y utilizado por Fastify para configurar automáticamente rutas, validaciones y documentación. Permite que el servidor tenga acceso programático a toda la especificación de la API en tiempo de ejecución, facilitando la generación automática de rutas y validadores.
 
 ### Linting y formateo
 
